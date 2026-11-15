@@ -1,3 +1,5 @@
+# Stage 1: simulated healthy vs damaged bearing signal, with RMS and kurtosis.
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,6 +15,7 @@ rng = np.random.default_rng(seed=1)
 shaft = 0.2 * np.sin(2 * np.pi * SHAFT_SPEED * t)
 healthy = shaft + NOISE * rng.standard_normal(len(t))
 
+# Each impact is modelled as a decaying 3 kHz ring, repeating at FAULT_RATE
 clicks = np.zeros(len(t))
 click_times = np.arange(0, DURATION, 1 / FAULT_RATE)
 for start in click_times:
@@ -28,6 +31,7 @@ faulty = healthy + clicks
 def rms(signal):
     return np.sqrt(np.mean(signal ** 2))
 
+# About 3 for random noise, higher when the signal has sharp impacts
 def kurtosis(signal):
     centered = signal - np.mean(signal)
     return np.mean(centered ** 4) / np.mean(centered ** 2) ** 2
