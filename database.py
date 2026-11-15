@@ -1,3 +1,6 @@
+# Case log stored in SQLite (cases.db). Each warning is a case that stays
+# open until it's closed as a real issue or a false alarm.
+
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -31,6 +34,7 @@ def create_table():
 
 
 def has_case(recording):
+    # Prevents logging the same recording twice when scanning again
     with connect() as db:
         row = db.execute(
             "SELECT COUNT(*) FROM cases WHERE recording = ?",
@@ -68,7 +72,7 @@ def list_cases():
             SELECT id, status, recording, finding, ROUND(score) AS score,
                    opened_at, outcome, action_taken, closed_at
             FROM cases
-            ORDER BY status DESC, score DESC
+            ORDER BY status DESC, score DESC  -- open cases first, strongest fault on top
             """,
             db,
         )
