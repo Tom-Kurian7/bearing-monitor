@@ -1,3 +1,5 @@
+# Stage 2: find the fault rate automatically with envelope analysis.
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt, hilbert
@@ -33,6 +35,7 @@ def spectrum(signal):
 
 
 def envelope_spectrum(signal):
+    # Bandpass around the 3 kHz ring, then take the Hilbert envelope
     b, a = butter(4, [2000, 4000], btype="bandpass", fs=SAMPLE_RATE)
     ringing_only = filtfilt(b, a, signal)
     envelope = np.abs(hilbert(ringing_only))
@@ -41,6 +44,7 @@ def envelope_spectrum(signal):
 
 
 def find_fault(signal):
+    # Bearing fault frequencies for this setup fall between 20 and 500 Hz
     freqs, strength = envelope_spectrum(signal)
     search = (freqs >= 20) & (freqs <= 500)
     biggest = np.argmax(strength[search])
