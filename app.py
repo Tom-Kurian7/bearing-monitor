@@ -1,3 +1,5 @@
+# Streamlit dashboard. Run with: streamlit run app.py
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -9,6 +11,7 @@ st.set_page_config(page_title="Bearing Monitor", layout="wide")
 database.create_table()
 
 
+# Cached so each recording is only analyzed once per session
 @st.cache_data(show_spinner="Analyzing recording...")
 def analyze(name):
     return analysis.analyze(name)
@@ -52,6 +55,7 @@ except FileNotFoundError as problem:
     st.error(str(problem))
     st.stop()
 
+# Which bearing card is open in the details section
 if "selected" not in st.session_state:
     st.session_state["selected"] = next(iter(analysis.RECORDINGS))
 
