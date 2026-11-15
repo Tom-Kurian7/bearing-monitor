@@ -1,3 +1,5 @@
+# Envelope analysis and fault diagnosis for the CWRU drive end bearing recordings.
+
 import urllib.request
 from pathlib import Path
 
@@ -19,6 +21,8 @@ HIT_RATE_PER_TURN = {
     "ball": 4.7135,
 }
 
+# A fault peak has to be this many times above the median background to count.
+# Picked from these recordings, would need tuning on more data.
 ALARM_LEVEL = 8
 
 DATA_FOLDER = Path(__file__).parent / "data"
@@ -55,13 +59,15 @@ def load_recording(path):
 
 
 def envelope_spectrum(signal, sample_rate):
+    # Bandpass around the resonance the impacts excite, then demodulate
+    # with the Hilbert transform so the envelope pulses at the fault rate.
     b, a = butter(4, [2000, 5000], btype="bandpass", fs=sample_rate)
     ringing_only = filtfilt(b, a, signal)
     envelope = np.abs(hilbert(ringing_only))
     envelope = envelope - np.mean(envelope)
     strength = np.abs(np.fft.rfft(envelope)) / len(envelope)
     freqs = np.fft.rfftfreq(len(envelope), 1 / sample_rate)
-    # normalize to the background level
+    # Normalize to the median background so scores read as "x above background"
     in_range = (freqs >= 20) & (freqs <= 500)
     return freqs, strength / np.median(strength[in_range])
 
@@ -71,13 +77,15 @@ def check_each_part(freqs, stands_out, rpm):
     results = {}
     for part, per_turn in HIT_RATE_PER_TURN.items():
         expected = per_turn * turns_per_second
-        # +-1.5% to allow for slip
+        # +-1.5% search window since rolling elements slip a little
         window = (freqs >= expected * 0.985) & (freqs <= expected * 1.015)
         results[part] = (expected, float(stands_out[window].max()))
     return results
 
 
 def diagnose(results):
+    # More than one part over the alarm usually means the fault frequency is
+    # weak or smeared (common for ball faults), so don't guess the part.
     over_alarm = [part for part, (_, score) in results.items() if score >= ALARM_LEVEL]
     if len(over_alarm) == 0:
         return "healthy"
