@@ -1,3 +1,5 @@
+# Stage 3: run the method on real CWRU recordings and name the damaged part.
+
 import sys
 import urllib.request
 from pathlib import Path
@@ -13,6 +15,7 @@ RECORDINGS = [
     ("130.mat", "outer ring damage", 12_000),
     ("118.mat", "ball damage", 12_000),
 ]
+# SKF 6205 fault frequencies as multiples of shaft speed (from CWRU)
 HIT_RATE_PER_TURN = {
     "outer ring": 3.5848,
     "inner ring": 5.4152,
@@ -57,6 +60,8 @@ def load_recording(path):
 
 
 def envelope_spectrum(signal, sample_rate):
+    # Bandpass around the resonance the impacts excite, then demodulate
+    # with the Hilbert transform so the envelope pulses at the fault rate.
     b, a = butter(4, [2000, 5000], btype="bandpass", fs=sample_rate)
     ringing_only = filtfilt(b, a, signal)
     envelope = np.abs(hilbert(ringing_only))
