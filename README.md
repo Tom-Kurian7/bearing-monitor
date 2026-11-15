@@ -2,7 +2,7 @@
 
 A small condition monitoring app. It reads bearing vibration recordings, finds signs of damage, names the damaged part, and tracks each warning as a case in a SQL database.
 
-I built it to understand how monitoring and diagnostics teams catch bearing problems before they turn into failures.
+I built it to understand how monitoring and diagnostics teams catch bearing problems before they turn into failures,
 I also wanted to get a small understanding of what type of work is done in the industry side. 
 
 **Live demo:** https://bearing-monitor-tom.streamlit.app/
