@@ -43,6 +43,16 @@ def has_case(recording):
     return row[0] > 0
 
 
+def get_case(recording):
+    with connect() as db:
+        db.row_factory = sqlite3.Row
+        row = db.execute(
+            "SELECT * FROM cases WHERE recording = ? ORDER BY id DESC LIMIT 1",
+            (recording,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
 def open_case(recording, finding, score):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     with connect() as db:
