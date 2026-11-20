@@ -53,6 +53,25 @@ def select(recording):
     st.session_state["selected"] = recording
 
 
+def review_card(case, where):
+    # Engineer feedback right where the alarm is shown. Closing a case as a
+    # real issue or a false alarm is what the actionable rate is built from.
+    if case["status"] == "open":
+        with st.container(key=f"bm_action_open_{where}"):
+            ui.action_text(f"Case {case['id']} open · engineer review", case["recording"],
+                           f"Opened {case['opened_at']} for {case['finding']}. Once the bearing has been inspected, record what it turned out to be.")
+            with st.form(f"review_{where}", border=False):
+                outcome = st.radio("What did it turn out to be?", ["real issue", "false alarm"], horizontal=True)
+                action = st.text_input("Action taken", placeholder="Replaced bearing at next planned stop")
+                if st.form_submit_button("Close case", type="primary", icon=":material/task_alt:"):
+                    database.close_case(int(case["id"]), outcome, action)
+                    st.rerun()
+    else:
+        with st.container(key=f"bm_action_done_{where}"):
+            ui.action_text(f"Case {case['id']} closed", f"Engineer marked it: {case['outcome']}",
+                           f"Action taken: {case['action_taken'] or 'none recorded'} · closed {case['closed_at']}")
+
+
 def lab_tab():
     try:
         results = {name: analyze(name) for name in analysis.RECORDINGS}
@@ -88,7 +107,17 @@ def lab_tab():
                 width="stretch",
             )
 
-    if st.button("Log cases for damaged bearings"):
+    unlogged = [n for n, r in results.items() if r["finding"] != "healthy" and not database.has_case(n)]
+    if unlogged:
+        with st.container(key="bm_action_alarm_lab"):
+            ui.action_text("Action needed", f"{len(unlogged)} damaged bearing(s) with no case yet",
+                           ", ".join(unlogged) + ". Log them so each one gets an engineer review. Healthy bearings don't get a case.")
+            log_lab = st.button("Log cases for damaged bearings", icon=":material/add_alert:", key="log_lab")
+    else:
+        log_lab = False
+        st.caption("Every damaged bearing has a case. Review them in the case log below.")
+
+    if log_lab:
         new_cases = 0
         for name, res in results.items():
             if res["finding"] != "healthy" and not database.has_case(name):
@@ -231,6 +260,24 @@ def wind_tab():
             icon=":material/notifications:",
         )
 
+    name = "Turbine HSS bearing"
+    case = database.get_case(name)
+    if case is None and state != "healthy":
+        urgent = "alarm" if level == "alarm" else "watch"
+        with st.container(key=f"bm_action_{urgent}_wind"):
+            if urgent == "alarm":
+                ui.action_text("Action needed", "Inner race fault on the HSS bearing",
+                               f"Fault score {data['smoothed'][i]:.0f}x, over the {wind_analysis.ALARM_LEVEL}x alarm level. "
+                               "Log a case so an engineer reviews it and plans the repair.")
+            else:
+                ui.action_text("Keep an eye on it", "Fault peak is rising",
+                               "Not at the alarm level yet. You can log a case now to start tracking it.")
+            if st.button("Log case for this turbine", icon=":material/add_alert:", key="log_wind"):
+                database.open_case(name, f"{state} (day {day})", float(data["smoothed"][i]))
+                st.rerun()
+    elif case is not None:
+        review_card(case, "wind")
+
     shown = data["day"] <= day
     trend = go.Figure()
     trend.add_hline(y=wind_analysis.ALARM_LEVEL, line=dict(color=ui.COLORS["alarm"], dash="dash", width=1.5),
@@ -293,13 +340,6 @@ def wind_tab():
         "An inner race fault also shows sidebands one shaft speed either side, because the damaged spot turns with the shaft."
     )
 
-    name = "Turbine HSS bearing"
-    if state != "healthy" and not database.has_case(name):
-        if st.button("Log case for this turbine"):
-            database.open_case(name, f"{state} (day {day})", float(data["smoothed"][i]))
-            st.rerun()
-    elif database.has_case(name):
-        st.caption("A case for this turbine is already in the case log.")
 
 
 wind, lab = st.tabs(["Wind turbine (field data)", "Lab bearings (CWRU)"])
@@ -309,6 +349,8 @@ with lab:
     lab_tab()
 
 st.header("Case log")
+st.caption("Every warning becomes a case. An engineer closes it as a real issue or a false alarm, "
+           "and that feedback is what the actionable rate at the top is built from.")
 cases = database.list_cases()
 
 if cases.empty:
@@ -318,7 +360,7 @@ else:
 
     open_cases = cases[cases["status"] == "open"]
     if not open_cases.empty:
-        st.subheader("Close a case")
+        st.subheader("Engineer review: close a case")
         with st.form("close_case", clear_on_submit=True):
             labels = {
                 row["id"]: f"Case {row['id']}: {row['recording']}, {row['finding']}"
