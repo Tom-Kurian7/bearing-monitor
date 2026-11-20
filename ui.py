@@ -31,86 +31,48 @@ CSS = """
     --bm-ok-bg: #16302A; --bm-watch-bg: #33291A; --bm-alarm-bg: #3A1E1A;
   }
 }
-.bm-eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 0.75rem; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--bm-muted); margin-bottom: -0.6rem; }
-
-/* status banner: colour carries the state, the dot pulses a few times when it changes to alarm */
-.bm-status { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 0.9rem 1.1rem;
+/* status banner: the colour carries the state */
+.bm-status { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; padding: 0.9rem 1.1rem;
   border-radius: 6px; border: 1px solid var(--bm-line); background: var(--bm-panel); }
-.bm-status.healthy { background: var(--bm-ok-bg); border-color: transparent; }
-.bm-status.watch { background: var(--bm-watch-bg); border-color: transparent; }
-.bm-status.alarm { background: var(--bm-alarm-bg); border-color: transparent; }
-.bm-dot { position: relative; width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.bm-status.healthy { background: var(--bm-ok-bg); }
+.bm-status.watch { background: var(--bm-watch-bg); }
+.bm-status.alarm { background: var(--bm-alarm-bg); }
+.bm-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
 .healthy .bm-dot { background: var(--bm-ok); } .watch .bm-dot { background: var(--bm-watch); }
 .alarm .bm-dot { background: var(--bm-alarm); }
-.alarm .bm-dot::after, .watch .bm-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%;
-  background: inherit; animation: bm-ping 1.4s cubic-bezier(0.16, 1, 0.3, 1) 3; }
-@keyframes bm-ping { from { transform: scale(1); opacity: 0.6; } to { transform: scale(2.6); opacity: 0; } }
-.bm-state { font-weight: 600; font-size: 1.35rem; letter-spacing: -0.01em;
-  line-height: 1.1; color: var(--bm-ink); }
+.bm-state { font-weight: 600; font-size: 1.3rem; line-height: 1.2; color: var(--bm-ink); }
 .bm-sub { font-size: 0.9rem; color: var(--bm-muted); }
 .bm-side { margin-left: auto; text-align: right; font-size: 0.9rem; color: var(--bm-muted); }
 .bm-side b { color: var(--bm-ink); font-weight: 600; }
 
 /* 50 day ribbon: one cell per recording, filled up to the selected day */
 .bm-ribbon { display: grid; grid-template-columns: repeat(50, minmax(0, 1fr)); gap: 3px; margin-top: 0.2rem; }
-.bm-cell { height: 22px; border-radius: 2px; background: var(--bm-empty); }
+.bm-cell { height: 20px; border-radius: 2px; background: var(--bm-empty); }
 .bm-cell.healthy { background: var(--bm-ok); } .bm-cell.watch { background: var(--bm-watch); }
 .bm-cell.alarm { background: var(--bm-alarm); }
-.bm-cell.today { outline: 2px solid var(--bm-ink); outline-offset: 1px; animation: bm-land 220ms cubic-bezier(0.16, 1, 0.3, 1); }
-@keyframes bm-land { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }
-.bm-axis { position: relative; height: 1.1rem; display: flex; justify-content: space-between; font-family: "IBM Plex Mono", monospace;
-  font-size: 0.72rem; color: var(--bm-muted); margin-top: 0.35rem; }
+.bm-cell.today { outline: 2px solid var(--bm-ink); outline-offset: 1px; }
+.bm-axis { position: relative; height: 1.1rem; display: flex; justify-content: space-between;
+  font-size: 0.78rem; color: var(--bm-muted); margin-top: 0.35rem; }
 .bm-legend { display: flex; gap: 1.1rem; flex-wrap: wrap; font-size: 0.82rem; color: var(--bm-muted); margin-top: 0.4rem; }
 .bm-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px;
   margin-right: 6px; vertical-align: -1px; background: var(--c); }
 
-/* page layout */
 [data-testid="stDecoration"] { display: none; }
-[data-testid="stMainBlockContainer"] { padding-top: 2.4rem; max-width: 1240px; }
-[data-testid="stMetricLabel"] p { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--bm-muted); }
-[data-testid="stMetricValue"] { font-variant-numeric: tabular-nums; font-weight: 600; }
-[data-baseweb="tab-list"] { gap: 1.6rem; border-bottom: 1px solid var(--bm-line); }
-[data-baseweb="tab"] p { font-weight: 600; font-size: 0.98rem; }
-[data-baseweb="tab"] { transition: color 180ms ease-out; }
+[data-testid="stMainBlockContainer"] { max-width: 1240px; }
 
-/* blocks rise in once when they first appear, and again when a tab is opened */
-[data-testid="stMainBlockContainer"] [data-testid="stElementContainer"] {
-  animation: bm-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-@keyframes bm-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
-.bm-cell { transition: background-color 200ms ease-out; }
-[data-testid^="stBaseButton"] { transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
-  box-shadow 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out; }
-[data-testid^="stBaseButton"]:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(20, 33, 43, 0.14); }
-[data-testid^="stBaseButton"]:active { transform: translateY(0); box-shadow: none; }
-
-/* action card: the next step for the engineer, coloured by how urgent it is */
-[class*="st-key-bm_action_"] { border: 1px solid var(--bm-line); border-left-width: 4px; border-radius: 8px;
-  padding: 1rem 1.2rem 1.1rem; background: var(--bm-panel); }
-[class*="st-key-bm_action_alarm"] { background: var(--bm-alarm-bg); border-left-color: var(--bm-alarm); }
-[class*="st-key-bm_action_watch"] { background: var(--bm-watch-bg); border-left-color: var(--bm-watch); }
-[class*="st-key-bm_action_open"] { border-left-color: var(--bm-alarm); }
-[class*="st-key-bm_action_done"] { background: var(--bm-ok-bg); border-left-color: var(--bm-ok); }
-.bm-act-kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--bm-muted); }
-.bm-act-title { font-weight: 600; font-size: 1.12rem; color: var(--bm-ink); margin: 0.1rem 0 0.2rem; }
-.bm-act-text { font-size: 0.92rem; color: var(--bm-muted); }
-[class*="st-key-bm_action_alarm"] [data-testid^="stBaseButton"], [class*="st-key-bm_action_open"] [data-testid="stBaseButton-primaryFormSubmit"] {
-  background: var(--bm-alarm); border-color: var(--bm-alarm); color: #fff; font-weight: 600; }
+/* action card: what the engineer should do next */
+[class*="st-key-bm_action_"] { border: 1px solid var(--bm-line); border-radius: 6px;
+  padding: 1rem 1.2rem; background: var(--bm-panel); }
+[class*="st-key-bm_action_alarm"] { background: var(--bm-alarm-bg); }
+[class*="st-key-bm_action_watch"] { background: var(--bm-watch-bg); }
+[class*="st-key-bm_action_done"] { background: var(--bm-ok-bg); }
+.bm-act-title { font-weight: 600; font-size: 1.05rem; color: var(--bm-ink); }
+.bm-act-text { font-size: 0.92rem; color: var(--bm-muted); margin-top: 0.15rem; }
+[class*="st-key-bm_action_alarm"] [data-testid^="stBaseButton"],
+[class*="st-key-bm_action_open"] [data-testid="stBaseButton-primaryFormSubmit"] {
+  background: var(--bm-alarm); border-color: var(--bm-alarm); color: #fff; }
 [class*="st-key-bm_action_watch"] [data-testid^="stBaseButton"] {
-  background: var(--bm-watch); border-color: var(--bm-watch); color: #fff; font-weight: 600; }
-[class*="st-key-bm_action_alarm"] [data-testid^="stBaseButton"] { animation: bm-glow 1.6s ease-out 0.4s 3; }
-[class*="st-key-bm_action_"] [data-testid^="stBaseButton"]:hover { filter: brightness(0.93); color: #fff; }
-@keyframes bm-glow { from { box-shadow: 0 0 0 0 rgba(194, 65, 45, 0.5); } to { box-shadow: 0 0 0 14px rgba(194, 65, 45, 0); } }
-
-@media (prefers-reduced-motion: reduce) {
-  .alarm .bm-dot::after, .watch .bm-dot::after, .bm-cell.today,
-  [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"],
-  [class*="st-key-bm_action_alarm"] [data-testid^="stBaseButton"] { animation: none; }
-  .bm-cell, [data-testid^="stBaseButton"] { transition: none; }
-  [data-testid^="stBaseButton"]:hover { transform: none; }
-}
+  background: var(--bm-watch); border-color: var(--bm-watch); color: #fff; }
 </style>
 """
 
@@ -119,8 +81,7 @@ def inject_css():
     st.markdown(CSS, unsafe_allow_html=True)
 
 
-def header(eyebrow, title, text):
-    st.markdown(f'<div class="bm-eyebrow">{html.escape(eyebrow)}</div>', unsafe_allow_html=True)
+def header(title, text):
     st.title(title)
     st.caption(text)
 
@@ -157,9 +118,8 @@ def day_ribbon(levels, day, alarm_day):
     )
 
 
-def action_text(kicker, title, text):
+def action_text(title, text):
     st.markdown(
-        f'<div class="bm-act-kicker">{html.escape(kicker)}</div>'
         f'<div class="bm-act-title">{html.escape(title)}</div>'
         f'<div class="bm-act-text">{html.escape(text)}</div>',
         unsafe_allow_html=True,
@@ -173,7 +133,6 @@ def style_chart(fig, title, height):
         height=height,
         margin=dict(t=56, b=10, l=10, r=10),
         hoverlabel=dict(font_family=FONT),
-        transition=dict(duration=300, easing="cubic-in-out"),
     )
     fig.update_xaxes(gridcolor=COLORS["grid"], zeroline=False)
     fig.update_yaxes(gridcolor=COLORS["grid"], zeroline=False)
