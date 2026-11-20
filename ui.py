@@ -37,9 +37,6 @@ CSS = """
 .bm-status.healthy { background: var(--bm-ok-bg); }
 .bm-status.watch { background: var(--bm-watch-bg); }
 .bm-status.alarm { background: var(--bm-alarm-bg); }
-.bm-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
-.healthy .bm-dot { background: var(--bm-ok); } .watch .bm-dot { background: var(--bm-watch); }
-.alarm .bm-dot { background: var(--bm-alarm); }
 .bm-state { font-weight: 600; font-size: 1.3rem; line-height: 1.2; color: var(--bm-ink); }
 .bm-sub { font-size: 0.9rem; color: var(--bm-muted); }
 .bm-side { margin-left: auto; text-align: right; font-size: 0.9rem; color: var(--bm-muted); }
@@ -89,7 +86,7 @@ def header(title, text):
 def status_banner(level, state, sub, side=""):
     side_html = f'<div class="bm-side">{side}</div>' if side else ""
     st.markdown(
-        f'<div class="bm-status {level}" role="status"><div class="bm-dot"></div>'
+        f'<div class="bm-status {level}" role="status">'
         f'<div><div class="bm-state">{html.escape(state)}</div><div class="bm-sub">{html.escape(sub)}</div></div>'
         f"{side_html}</div>",
         unsafe_allow_html=True,
