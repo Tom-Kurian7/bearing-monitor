@@ -89,6 +89,8 @@ The lab tab downloads its four recordings from the CWRU Bearing Data Center into
 | `app.py` | The dashboard (Streamlit and Plotly) |
 | `wind_analysis.py` | Wind turbine features: envelope spectrum, inner race score, alarm logic |
 | `wind_features.npz` | Daily features and envelope spectra for the 50 wind turbine recordings |
+| `ui.py` | Status banner, day ribbon and chart styling |
+| `.streamlit/config.toml` | Colours and fonts, light and dark |
 | `analysis.py` | Lab bearing math: filtering, envelope, hit rates, diagnosis |
 | `database.py` | The SQL: creates the case table, adds, closes and counts cases |
 | `stage1_signal.py` | Learning step 1: make a fake healthy and damaged signal |
