@@ -1,0 +1,28 @@
+[theme]
+base = "light"
+primaryColor = "#0F6E8C"
+backgroundColor = "#F4F6F7"
+secondaryBackgroundColor = "#E8EDEF"
+textColor = "#14212B"
+borderColor = "#D3DBDF"
+redColor = "#C2412D"
+orangeColor = "#B7791F"
+greenColor = "#1E8E5A"
+blueColor = "#0F6E8C"
+font = "IBM Plex Sans:https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap, sans-serif"
+codeFont = "IBM Plex Mono:https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap, monospace"
+headingFontWeights = [600, 600, 600]
+baseRadius = "small"
+showWidgetBorder = true
+chartCategoricalColors = ["#0F6E8C", "#E07A3F", "#1E8E5A", "#7A6FD0", "#9AA5B0"]
+
+[theme.dark]
+primaryColor = "#5CB8D6"
+backgroundColor = "#0E161C"
+secondaryBackgroundColor = "#17222A"
+textColor = "#E3EAEE"
+borderColor = "#2A3842"
+redColor = "#E8705C"
+orangeColor = "#E0A84A"
+greenColor = "#4CC08A"
+blueColor = "#5CB8D6"
