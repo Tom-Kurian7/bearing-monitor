@@ -6,10 +6,12 @@ import streamlit as st
 
 import analysis
 import database
+import ui
 import wind_analysis
 
-st.set_page_config(page_title="Bearing Monitor", layout="wide")
+st.set_page_config(page_title="Bearing Monitor", page_icon=":material/vibration:", layout="wide")
 database.create_table()
+ui.inject_css()
 
 
 # Cached so each recording is only analyzed once per session
@@ -18,11 +20,12 @@ def analyze(name):
     return analysis.analyze(name)
 
 
-st.title("Bearing Monitor")
-st.caption(
+ui.header(
+    "Condition monitoring · bearing vibration",
+    "Bearing Monitor",
     "Finds bearing damage from vibration and tracks each warning as a case. "
     "Wind turbine tab: field data from a 2 MW turbine's high-speed shaft bearing. "
-    "Lab tab: test rig recordings from Case Western Reserve University."
+    "Lab tab: test rig recordings from Case Western Reserve University.",
 )
 
 numbers = database.summary()
@@ -164,6 +167,7 @@ def lab_tab():
     )
     chart.update_layout(
         title="Where this recording pulses, compared with the three expected hit rates",
+        font=dict(family=ui.FONT),
         xaxis_title="Pulses per second (Hz)",
         yaxis_title="Times above background",
         yaxis_range=[0, top_of_chart],
@@ -199,15 +203,18 @@ def wind_tab():
     date = pd.to_datetime(data["dates"][i]).strftime("%b %d, %Y")
     state = wind_analysis.status_on(data, day)
 
-    label = f"Day {day} ({date}): "
-    if state == "healthy":
-        st.success(label + "healthy", icon=":material/check_circle:")
-    elif state == "watch":
-        st.warning(label + "watch, fault peak rising", icon=":material/warning:")
-    else:
-        st.error(label + "inner race fault", icon=":material/error:")
+    level = {"healthy": "healthy", "watch": "watch"}.get(state, "alarm")
+    headline = {"healthy": "Healthy", "watch": "Watch: fault peak rising"}.get(state, "Inner race fault")
+    side = ""
+    if alarm_day is not None and day >= alarm_day:
+        side = f"Alarm since <b>day {alarm_day}</b><br>{day - alarm_day} days in alarm"
+    ui.status_banner(level, headline, f"Day {day} of {days} · {date} · {data['shaft_hz'][i] * 60:.0f} rpm", side)
 
-    col1, col2, col3, col4 = st.columns(4)
+    levels = [{"healthy": "healthy", "watch": "watch"}.get(wind_analysis.status_on(data, d), "alarm") for d in data["day"]]
+    ui.day_ribbon(levels, day, alarm_day if alarm_day is not None and day >= alarm_day else None)
+
+    with st.container(border=True):
+        col1, col2, col3, col4 = st.columns(4)
     col1.metric("Fault score (3 day median)", f"{data['smoothed'][i]:.0f}x",
                 help=f"Inner race peak in the envelope spectrum vs background. Watch at {wind_analysis.WATCH_LEVEL}x, alarm at {wind_analysis.ALARM_LEVEL}x.")
     col2.metric("Vibration level (RMS)", f"{data['rms'][i]:.2f}",
@@ -226,39 +233,39 @@ def wind_tab():
 
     shown = data["day"] <= day
     trend = go.Figure()
-    trend.add_hline(y=wind_analysis.ALARM_LEVEL, line=dict(color="#c9302c", dash="dash", width=1.5),
+    trend.add_hline(y=wind_analysis.ALARM_LEVEL, line=dict(color=ui.COLORS["alarm"], dash="dash", width=1.5),
                     annotation_text=f"alarm {wind_analysis.ALARM_LEVEL}x", annotation_position="top right")
-    trend.add_hline(y=wind_analysis.WATCH_LEVEL, line=dict(color="#ba7517", dash="dot", width=1.5),
+    trend.add_hline(y=wind_analysis.WATCH_LEVEL, line=dict(color=ui.COLORS["watch"], dash="dot", width=1.5),
                     annotation_text=f"watch {wind_analysis.WATCH_LEVEL}x", annotation_position="bottom right")
     trend.add_trace(go.Scatter(
         x=data["day"][shown], y=data["ir_score"][shown], mode="markers", name="daily score",
-        marker=dict(color="#9aa5b0", size=8), hovertemplate="day %{x}<br>%{y:.0f}x<extra></extra>",
+        marker=dict(color="#9AA5B0", size=8, line=dict(width=1, color="rgba(255,255,255,0.7)")), hovertemplate="day %{x}<br>%{y:.0f}x<extra></extra>",
     ))
     trend.add_trace(go.Scatter(
         x=data["day"][shown], y=data["smoothed"][shown], mode="lines", name="3 day median",
-        line=dict(color="#2a78d6", width=2.5), hovertemplate="day %{x}<br>%{y:.0f}x<extra></extra>",
+        line=dict(color=ui.COLORS["accent"], width=3, shape="spline", smoothing=0.4), hovertemplate="day %{x}<br>%{y:.0f}x<extra></extra>",
     ))
     if alarm_day is not None and day >= alarm_day:
-        trend.add_vline(x=alarm_day, line=dict(color="#c9302c", width=1))
+        trend.add_vline(x=alarm_day, line=dict(color=ui.COLORS["alarm"], width=1),
+                        annotation_text=f"alarm, day {alarm_day}", annotation_position="top left")
     trend.update_layout(
-        title="Inner race fault score over time",
         xaxis=dict(title="Day", range=[0.5, days + 0.5]),
         yaxis=dict(title="Times above background", range=[0, max(60, data["ir_score"].max() * 1.05)]),
         legend=dict(orientation="h", yanchor="bottom", y=-0.35, x=0),
-        margin=dict(t=50, b=10), height=380,
     )
+    ui.style_chart(trend, "Inner race fault score over time", 380)
     st.plotly_chart(trend)
 
     rms_chart = go.Figure(go.Scatter(
         x=data["day"][shown], y=data["rms"][shown], mode="lines+markers",
-        line=dict(color="#54616d", width=2), marker=dict(size=6), hovertemplate="day %{x}<br>%{y:.2f}<extra></extra>",
+        line=dict(color="#54616D", width=2), marker=dict(size=6), hovertemplate="day %{x}<br>%{y:.2f}<extra></extra>",
     ))
     rms_chart.update_layout(
-        title="Overall vibration level (RMS) over time",
         xaxis=dict(title="Day", range=[0.5, days + 0.5]),
         yaxis=dict(title="RMS", range=[0, data["rms"].max() * 1.15]),
-        margin=dict(t=50, b=10), height=260, showlegend=False,
+        showlegend=False,
     )
+    ui.style_chart(rms_chart, "Overall vibration level (RMS) over time", 260)
     st.plotly_chart(rms_chart)
     st.caption("The fault score climbs weeks before the overall vibration level moves. That gap is the warning time.")
 
@@ -267,18 +274,19 @@ def wind_tab():
     spectrum = go.Figure()
     for hz, text, dash in [(fault_hz, "inner race", "dash"), (fault_hz - shaft, "sideband", "dot"),
                            (fault_hz + shaft, "sideband", "dot"), (2 * fault_hz, "2x inner race", "dash")]:
-        spectrum.add_vline(x=hz, line=dict(color="#eb6834", dash=dash, width=1.5),
+        spectrum.add_vline(x=hz, line=dict(color="#E07A3F", dash=dash, width=1.5),
                            annotation_text=text, annotation_position="top")
     spectrum.add_trace(go.Scatter(
-        x=data["freqs"], y=data["spectra"][i], mode="lines", line=dict(color="#3a3a38", width=1),
+        x=data["freqs"], y=data["spectra"][i], mode="lines", line=dict(color="#54616D", width=1),
         hovertemplate="%{x:.1f} Hz<br>%{y:.0f}x<extra></extra>",
     ))
     spectrum.update_layout(
-        title=f"Envelope spectrum, day {day}",
         xaxis=dict(title="Frequency (Hz)", range=[0, wind_analysis.SPECTRUM_MAX_HZ]),
         yaxis=dict(title="Times above background", rangemode="tozero"),
-        margin=dict(t=60, b=10), height=360, showlegend=False,
+        showlegend=False,
     )
+    ui.style_chart(spectrum, f"Envelope spectrum, day {day}", 360)
+    spectrum.update_layout(margin=dict(t=70))
     st.plotly_chart(spectrum)
     st.caption(
         f"Inner race fault frequency is {wind_analysis.INNER_RACE_ORDER}x shaft speed ({fault_hz:.0f} Hz today). "
